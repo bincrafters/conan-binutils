@@ -1,73 +1,81 @@
 # -*- coding: utf-8 -*-
 
-from conans import ConanFile, CMake, tools
+from conans import ConanFile, AutoToolsBuildEnvironment, tools
 import os
 
 
-class LibnameConan(ConanFile):
-    name = "libname"
-    version = "0.0.0"
-    description = "Keep it short"
-    # topics can get used for searches, GitHub topics, Bintray tags etc. Add here keywords about the library
-    topics = ("conan", "libname", "logging")
-    url = "https://github.com/bincrafters/conan-libname"
-    homepage = "https://github.com/original_author/original_lib"
+class BinutilsConan(ConanFile):
+    name = "binutils"
+    version = "2.32"
+    description = "The GNU Binutils are a collection of binary tools"
+    topics = ("conan", "bintuils", "utilities", "toolchain")
+    url = "https://github.com/bincrafters/conan-binutils"
+    homepage = "https://www.gnu.org/software/binutils/"
     author = "Bincrafters <bincrafters@gmail.com>"
-    license = "MIT"  # Indicates license type of the packaged library; please use SPDX Identifiers https://spdx.org/licenses/
-    exports = ["LICENSE.md"]      # Packages the license for the conanfile.py
-    # Remove following lines if the target lib does not use cmake.
-    exports_sources = ["CMakeLists.txt"]
-    generators = "cmake"
-
-    # Options may need to change depending on the packaged library.
+    license = "GPL-3.0-or-later"
+    exports = ["LICENSE.md"]
     settings = "os", "arch", "compiler", "build_type"
-    options = {"shared": [True, False], "fPIC": [True, False]}
-    default_options = {"shared": False, "fPIC": True}
-
-    # Custom attributes for Bincrafters recipe conventions
+    options = {"shared": [True, False], "fPIC": [True, False], "target": "ANY"}
+    default_options = {"shared": False, "fPIC": True, "target": None}
     _source_subfolder = "source_subfolder"
     _build_subfolder = "build_subfolder"
-
-    requires = (
-        "OpenSSL/1.0.2r@conan/stable",
-        "zlib/1.2.11@conan/stable"
-    )
 
     def config_options(self):
         if self.settings.os == 'Windows':
             del self.options.fPIC
 
     def source(self):
-        source_url = "https://github.com/libauthor/libname"
-        tools.get("{0}/archive/v{1}.tar.gz".format(source_url, self.version), sha256="Please-provide-a-checksum")
+        source_url = "https://ftp.gnu.org/gnu/binutils/binutils-%s.tar.bz2" % self.version
+        tools.get(source_url, sha256="de38b15c902eb2725eac6af21183a5f34ea4634cb0bcef19612b50e5ed31072d")
         extracted_dir = self.name + "-" + self.version
-
-        # Rename to "source_subfolder" is a convention to simplify later steps
         os.rename(extracted_dir, self._source_subfolder)
 
-    def _configure_cmake(self):
-        cmake = CMake(self)
-        cmake.definitions["BUILD_TESTS"] = False  # example
-        cmake.configure(build_folder=self._build_subfolder)
-        return cmake
-
     def build(self):
-        cmake = self._configure_cmake()
-        cmake.build()
+        tools.mkdir(self._build_subfolder)
+        condigure_dir = os.path.abspath(os.path.join(self.source_folder, self._source_subfolder))
+        with tools.chdir(self._build_subfolder):
+            # http://www.linuxfromscratch.org/lfs/view/stable/chapter06/binutils.html
+            args = ["--enable-gold",
+                    "--enable-ld=default",
+                    "--enable-plugins",
+                    "--disable-werrror",
+                    "--enable-64-bit-bfd",
+                    "--with-system-zlib",
+                    "--disable-multilib"]
+            if self.options.shared:
+                args.extend(["--disable-static", "--enable-shared"])
+            else:
+                args.extend(["--disable-shared", "--enable-static"])
+            env_build = AutoToolsBuildEnvironment(self)
+            if self.settings.os == "Macos":
+                env_build.cxx_flags.append("-std=c++11")  # TODO: cppstd?
+            env_build.configure(args=args, configure_dir=condigure_dir, target=self.options.target)
+            env_build.make()
+            env_build.install()
 
     def package(self):
         self.copy(pattern="LICENSE", dst="licenses", src=self._source_subfolder)
-        cmake = self._configure_cmake()
-        cmake.install()
-        # If the CMakeLists.txt has a proper install method, the steps below may be redundant
-        # If so, you can just remove the lines below
-        include_folder = os.path.join(self._source_subfolder, "include")
-        self.copy(pattern="*", dst="include", src=include_folder)
-        self.copy(pattern="*.dll", dst="bin", keep_path=False)
-        self.copy(pattern="*.lib", dst="lib", keep_path=False)
-        self.copy(pattern="*.a", dst="lib", keep_path=False)
-        self.copy(pattern="*.so*", dst="lib", keep_path=False)
-        self.copy(pattern="*.dylib", dst="lib", keep_path=False)
+
+    def _create_tool_var(self, name, value):
+        cross_prefix = str(self.options.target) + "-" if self.options.target else ""
+        path = os.path.join(self.package_folder, "bin", cross_prefix + value)
+        self.output.info("Appending %s env var with : %s" % (name, path))
+        return path
 
     def package_info(self):
-        self.cpp_info.libs = tools.collect_libs(self)
+        bindir = os.path.join(self.package_folder, "bin")
+        self.output.info("Appending PATH env var with : " + bindir)
+        self.env_info.PATH.append(bindir)
+
+        self.env_info.LD = self._create_tool_var('LD', 'ld')
+        self.env_info.AS = self._create_tool_var('AS', 'as')
+        self.env_info.ADDR2LINE = self._create_tool_var('ADDR2LINE', 'addr2line')
+        self.env_info.AR = self._create_tool_var('AR', 'ar')
+        self.env_info.NM = self._create_tool_var('NM', 'nm')
+        self.env_info.OBJCOPY = self._create_tool_var('OBJCOPY', 'objcopy')
+        self.env_info.OBJDUMP = self._create_tool_var('OBJDUMP', 'objdump')
+        self.env_info.RANLIB = self._create_tool_var('RANLIB', 'ranlib')
+        self.env_info.READELF = self._create_tool_var('READELF', 'readelf')
+        self.env_info.SIZE = self._create_tool_var('SIZE', 'size')
+        self.env_info.STRINGS = self._create_tool_var('STRINGS', 'strings')
+        self.env_info.STRIP = self._create_tool_var('STRIP', 'strip')
