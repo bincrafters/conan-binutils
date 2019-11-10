@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from conans import ConanFile, AutoToolsBuildEnvironment, tools
 import os
 
@@ -11,7 +9,6 @@ class BinutilsConan(ConanFile):
     topics = ("conan", "bintuils", "utilities", "toolchain")
     url = "https://github.com/bincrafters/conan-binutils"
     homepage = "https://www.gnu.org/software/binutils/"
-    author = "Bincrafters <bincrafters@gmail.com>"
     license = "GPL-3.0-or-later"
     exports = ["LICENSE.md"]
     settings = "os", "arch", "compiler", "build_type"
