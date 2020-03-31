@@ -10,7 +10,6 @@ class BinutilsConan(ConanFile):
     url = "https://github.com/bincrafters/conan-binutils"
     homepage = "https://www.gnu.org/software/binutils/"
     license = "GPL-3.0-or-later"
-    exports = ["LICENSE.md"]
     settings = "os", "arch", "compiler", "build_type"
     options = {"shared": [True, False], "fPIC": [True, False], "target": "ANY"}
     default_options = {"shared": False, "fPIC": True, "target": None}
