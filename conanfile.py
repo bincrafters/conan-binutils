@@ -1,10 +1,11 @@
 from conans import ConanFile, AutoToolsBuildEnvironment, tools
 import os
 
+required_conan_version = ">=1.33.0"
+
 
 class BinutilsConan(ConanFile):
     name = "binutils"
-    version = "2.32"
     description = "The GNU Binutils are a collection of binary tools"
     topics = ("conan", "bintuils", "utilities", "toolchain")
     url = "https://github.com/bincrafters/conan-binutils"
@@ -21,10 +22,7 @@ class BinutilsConan(ConanFile):
             del self.options.fPIC
 
     def source(self):
-        source_url = "https://ftp.gnu.org/gnu/binutils/binutils-%s.tar.bz2" % self.version
-        tools.get(source_url, sha256="de38b15c902eb2725eac6af21183a5f34ea4634cb0bcef19612b50e5ed31072d")
-        extracted_dir = self.name + "-" + self.version
-        os.rename(extracted_dir, self._source_subfolder)
+        tools.get(**self.conan_data["sources"][self.version], strip_root=True, destination=self._source_subfolder)
 
     def build(self):
         tools.mkdir(self._build_subfolder)
