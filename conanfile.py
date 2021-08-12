@@ -23,7 +23,8 @@ class BinutilsConan(ConanFile):
             del self.options.fPIC
 
     def validate(self):
-        raise ConanInvalidConfiguration("The binutils recipe only supports Linux")
+        if self.settings.os not in ["Linux",]:
+            raise ConanInvalidConfiguration("The binutils recipe only supports Linux")
 
     def source(self):
         tools.get(**self.conan_data["sources"][self.version], strip_root=True, destination=self._source_subfolder)
