@@ -1,4 +1,4 @@
 sources:
-  "2.32":
-    url: "https://ftp.gnu.org/gnu/binutils/binutils-2.32.tar.bz2"
-    sha256: "de38b15c902eb2725eac6af21183a5f34ea4634cb0bcef19612b50e5ed31072d"
+  "2.37":
+    url: "https://ftp.gnu.org/gnu/binutils/binutils-2.37.tar.bz2"
+    sha256: "67fc1a4030d08ee877a4867d3dcab35828148f87e1fd05da6db585ed5a166bd4"
