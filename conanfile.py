@@ -1,4 +1,5 @@
 from conans import ConanFile, AutoToolsBuildEnvironment, tools
+from conans.errors import ConanInvalidConfiguration
 import os
 
 required_conan_version = ">=1.33.0"
@@ -20,6 +21,9 @@ class BinutilsConan(ConanFile):
     def config_options(self):
         if self.settings.os == 'Windows':
             del self.options.fPIC
+
+    def validate(self):
+        raise ConanInvalidConfiguration("The binutils recipe only supports Linux")
 
     def source(self):
         tools.get(**self.conan_data["sources"][self.version], strip_root=True, destination=self._source_subfolder)
