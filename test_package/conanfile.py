@@ -1,8 +1,11 @@
 from conans import ConanFile, tools
-import os
+import os 
 
 
 class TestPackageConan(ConanFile):
 
+    settings = "os", "arch"
+
     def test(self):
-        self.run("%s --version" % os.environ["LD"], run_environment=True)
+        if not tools.cross_building(self):
+            self.run("%s --version" % os.environ["LD"], run_environment=True)
